@@ -1,9 +1,13 @@
+
 const express = require("express");
-const cors = require("cors");
 const bodyParser = require("body-parser");
+const cors = require("cors");
 const { Configuration, OpenAIApi } = require("openai");
+require("dotenv").config();
 
 const app = express();
+const port = process.env.PORT || 3000;
+
 app.use(cors());
 app.use(bodyParser.json());
 
@@ -12,24 +16,26 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
-app.post("/chat", async (req, res) => {
+app.post("/translate", async (req, res) => {
+  const { message } = req.body;
+  if (!message) return res.status(400).json({ error: "No message provided" });
+
   try {
-    const { prompt } = req.body;
-    const response = await openai.createChatCompletion({
+    const completion = await openai.createChatCompletion({
       model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: prompt }],
+      messages: [
+        { role: "system", content: "Ты чеченский переводчик. Отвечай на чеченском и русском." },
+        { role: "user", content: message }
+      ],
     });
-    res.json({ reply: response.data.choices[0].message.content });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+
+    res.json({ reply: completion.data.choices[0].message.content });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "AI request failed" });
   }
 });
 
-app.get("/", (req, res) => {
-  res.send("Chechen AI Server is running.");
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log("Server is running on port", PORT);
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
