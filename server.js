@@ -1,7 +1,7 @@
-import express from "express";
-import cors from "cors";
-import { Configuration, OpenAIApi } from "openai";
-import * as dotenv from "dotenv";
+import OpenAI from 'openai';
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
@@ -11,26 +11,28 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-const configuration = new Configuration({
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-const openai = new OpenAIApi(configuration);
 
-app.post("/translate", async (req, res) => {
-  const { prompt } = req.body;
+app.post('/chat', async (req, res) => {
+  const { message } = req.body;
+  if (!message) return res.status(400).send({ error: 'No message provided' });
 
   try {
-    const completion = await openai.createChatCompletion({
-      model: "gpt-4",
-      messages: [{ role: "user", content: prompt }],
+    const chatResponse = await openai.chat.completions.create({
+      model: 'gpt-4',
+      messages: [{ role: 'user', content: message }],
     });
 
-    res.json({ result: completion.data.choices[0].message.content });
+    const reply = chatResponse.choices[0]?.message?.content?.trim();
+    res.send({ reply });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('OpenAI error:', error);
+    res.status(500).send({ error: 'Failed to get response from OpenAI' });
   }
 });
 
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  console.log(`✅ Server running at http://localhost:${port}`);
 });
