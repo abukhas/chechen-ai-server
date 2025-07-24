@@ -1,38 +1,35 @@
-import OpenAI from 'openai';
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-
-dotenv.config();
+const express = require("express");
+const cors = require("cors");
+require("dotenv").config();
 
 const app = express();
-const port = process.env.PORT || 3000;
-
-app.use(cors());
 app.use(express.json());
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [];
 
-app.post('/chat', async (req, res) => {
-  const { message } = req.body;
-  if (!message) return res.status(400).send({ error: 'No message provided' });
-
-  try {
-    const chatResponse = await openai.chat.completions.create({
-      model: 'gpt-4',
-      messages: [{ role: 'user', content: message }],
-    });
-
-    const reply = chatResponse.choices[0]?.message?.content?.trim();
-    res.send({ reply });
-  } catch (error) {
-    console.error('OpenAI error:', error);
-    res.status(500).send({ error: 'Failed to get response from OpenAI' });
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS not allowed: " + origin));
+    }
   }
+}));
+
+// 🔥 ВАЖНО: вот маршрут, которого не было!
+app.post("/api/chat", async (req, res) => {
+  const message = req.body.message;
+
+  if (!message) {
+    return res.status(400).json({ error: "Missing message" });
+  }
+
+  // Пока просто возвращаем текст (можно позже подключить OpenAI)
+  res.json({ reply: "AI получил сообщение: " + message });
 });
 
-app.listen(port, () => {
-  console.log(`✅ Server running at http://localhost:${port}`);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log("✅ Сервер запущен на порту", PORT);
 });
