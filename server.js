@@ -1,16 +1,15 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-const { Configuration, OpenAIApi } = require("openai");
+const { OpenAI } = require("openai");
 
 const app = express();
 app.use(express.json());
 
 // Подключение OpenAI
-const configuration = new Configuration({
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-const openai = new OpenAIApi(configuration);
 
 // Разрешённые домены
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [];
@@ -38,7 +37,7 @@ app.post("/api/chat", async (req, res) => {
   console.log("📩 Сообщение от пользователя:", userMessage);
 
   try {
-    const completion = await openai.createChatCompletion({
+    const completion = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
         {
@@ -55,7 +54,7 @@ app.post("/api/chat", async (req, res) => {
       max_tokens: 1000,
     });
 
-    const reply = completion.data.choices?.[0]?.message?.content?.trim();
+    const reply = completion.choices?.[0]?.message?.content?.trim();
 
     console.log("🤖 Ответ AI:", reply || "❌ Нет текста от OpenAI");
 
