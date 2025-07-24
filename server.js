@@ -1,17 +1,18 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-const { OpenAI } = require("openai");
+const { Configuration, OpenAIApi } = require("openai");
 
 const app = express();
 app.use(express.json());
 
-// Подключаем OpenAI
-const openai = new OpenAI({
+// Подключение OpenAI
+const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
 });
+const openai = new OpenAIApi(configuration);
 
-// CORS — разрешаем только твоему сайту
+// Разрешённые домены
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [];
 
 app.use(
@@ -37,7 +38,7 @@ app.post("/api/chat", async (req, res) => {
   console.log("📩 Сообщение от пользователя:", userMessage);
 
   try {
-    const completion = await openai.chat.completions.create({
+    const completion = await openai.createChatCompletion({
       model: "gpt-4",
       messages: [
         {
@@ -54,14 +55,14 @@ app.post("/api/chat", async (req, res) => {
       max_tokens: 1000,
     });
 
-    const reply = completion.choices?.[0]?.message?.content?.trim();
+    const reply = completion.data.choices?.[0]?.message?.content?.trim();
 
     console.log("🤖 Ответ AI:", reply || "❌ Нет текста от OpenAI");
 
     res.json({
       reply:
         reply ||
-        "Я пока ещё учусь, и не могу точно ответить на это. Но скоро смогу — особенно если ты поможешь мне своим словарём и примерами.",
+        "Я пока ещё учусь, и не могу точно ответить. Но скоро смогу — особенно если ты поможешь мне своим словарём и материалами.",
     });
   } catch (error) {
     console.error("❌ Ошибка AI:", error.message);
