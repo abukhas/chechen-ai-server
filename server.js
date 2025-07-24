@@ -6,7 +6,7 @@ const { OpenAI } = require("openai");
 const app = express();
 app.use(express.json());
 
-// Подключение OpenAI
+// Настройка OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -65,9 +65,11 @@ app.post("/api/chat", async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Ошибка AI:", error.message);
+
+    // Покажем ошибку в ответе, чтобы легче было отследить
     res.status(500).json({
       reply:
-        "Произошла ошибка при обращении к AI. Попробуй ещё раз позже. Я всё равно стараюсь учиться каждый день.",
+        "Произошла ошибка при обращении к AI. Подробности: " + error.message,
     });
   }
 });
